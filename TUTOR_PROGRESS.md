@@ -79,11 +79,38 @@ Machine: Windows 11, PowerShell terminal in VS Code.
 - 2026-10-28 · M2 Step 6: learner skipped the milestone check ("continue"). Gave short answers (your program calls Open-Meteo, Claude only sends a tool_use block; the description is a hint, the resolve/is_relative_to check is the lock; ids match tool_results to requests). Offered to drop checks if they want; otherwise keep asking at milestone ends.
 - 2026-10-28 · M2 Step 7 sent: git add . / commit "Milestone 2: calculator, weather and read_file tools as JSON schemas" / git push.
 
+- 2026-10-28 · M2 Step 7 done. Commit 4a1ce47 pushed. **MILESTONE 2 COMPLETE.**
+
+## Milestone 3 steps (expected)
+1. agent.py part 1: setup, MODEL, MAX_ITERATIONS = 10, agent SYSTEM_PROMPT (use tools over guessing, explain which tools and why), handle_tool_calls(response) → list of tool_result blocks + "[tool]" trace line
+2. agent.py part 2: run_agent(question) loop (append assistant content, stop if stop_reason != "tool_use", append ONE user message with all tool_results, cap) + `if __name__ == "__main__"` with sys.argv question
+3. Test runs: shopping total (read_file → calculator chain), multi-step math, no-tool question; then MAX_ITERATIONS = 1 to see the cap
+4. Print the message history after a run (see the transcript the API sees)
+5. Understanding check + commit + push
+
+- 2026-10-28 · M3 Step 1 sent: agent.py part 1 (setup, SYSTEM_PROMPT, MAX_ITERATIONS, handle_tool_calls). Check: one-liner that makes one call and prints handle_tool_calls() output for "What is 2.5 to the power of 3?" → [{'type': 'tool_result', 'tool_use_id': 'toolu_…', 'content': '15.625'}].
+
+- 2026-10-28 · M3 Step 1 done. agent.py part 1 correct; one-liner gave calculator power 2.5^3 → [{'type': 'tool_result', 'tool_use_id': 'toolu_01Uy…', 'content': '15.625'}].
+- 2026-10-28 · M3 Step 2 sent: run_agent(question) loop + __main__ with sys.argv. Checks: `python agent.py` (shopping total = 34.15) and `python agent.py "Is it warmer in Lisbon or Oslo right now, and by how many degrees?"` (parallel weather, then calculator subtract).
+
+- 2026-10-28 · M3 Step 2 done (learner said "continue"; tutor ran `python agent.py` once to verify). 5 turns: read_file, then 3 sequential calculator adds, end_turn → 34.15, explained tools used. Answer used Markdown (** and tables) → ugly in terminal: fix with a prompt line in M4 streaming step.
+- Observation to teach: tool granularity drives loop length (2-number calculator → one turn per addition; each turn resends history).
+- 2026-10-28 · M3 Step 3 sent: test runs, no code: Lisbon vs Oslo (parallel + chain), "Who wrote Romeo and Juliet?" (no tool, 1 turn), MAX_ITERATIONS = 1 (cap message), then back to 10.
+
+- 2026-10-28 · M3 Step 3 done ("done", no output pasted). MAX_ITERATIONS confirmed back to 10.
+- 2026-10-28 · M3 Step 4 sent: run_agent(messages: list) now takes the caller's list (mutates it); describe(block) uses block.to_dict() for SDK objects; print_transcript(messages) prints one line per block with the last 6 chars of tool ids so tool_use ↔ tool_result pairs are visible. __main__ builds messages, runs, prints transcript. Check with the Lisbon/Oslo question.
+
+- 2026-10-28 · M3 Step 4 done. run_agent(messages), describe, print_transcript, __main__ all correct (syntax OK).
+- 2026-10-28 · M3 Step 5 sent: understanding check. Q1 message 2 role "user": what's in it, who made it, why "user". Q2 what breaks if only Claude's text is appended. Q3 why MAX_ITERATIONS if the loop already stops on != "tool_use".
+
+- 2026-10-28 · M3 Step 5: learner skipped the check ("continue"). Gave short answers.
+- 2026-10-28 · M3 Step 6 sent: commit "Milestone 3: hand-written agent loop with iteration cap and transcript" + push.
+
 ## Technical notes (for the tutor)
 - anthropic 2.3.0 = API version 2026-10-21: no temperature/top_p/top_k (400). Basic messages.create unchanged.
 - claude-sonnet-5-5: adaptive thinking on by default (content may include an empty `thinking` block before `text`), effort default high, forced tool_choice any/tool returns 400 (use auto).
 - Plan for M4: handle stop_reason "refusal" and mention server-side fallbacks (beta server-side-fallback-2026-07-01, fallbacks="default").
 
 ## Next
-- Verify M2 commit + push (notes/shopping.md, tools.py, see_tool_call.py tracked; no __pycache__/.env). Then **Milestone 3 Step 1**: agent.py, the loop. Plan: messages list → create(tools=TOOLS) → if stop_reason == "tool_use": append assistant content, run each tool_use via run_tool, append ONE user message with all tool_result blocks (tool_use_id) → repeat; stop on end_turn; MAX_ITERATIONS cap. Keep blocks under 40 lines (split loop across 2 steps if needed). Commit TUTOR_PROGRESS.md updates with the M2 commit.
+- Verify M3 commit + push. Then **Milestone 4 Step 1**: tools return errors instead of crashing (try/except in run_tool → tool_result with is_error: True). Show plan for M4 first. M4 will reuse run_agent(messages) for a multi-turn chat REPL. Commit TUTOR_PROGRESS.md updates with the M2 commit.
 - Design decisions: manual loop (learner's requirement, no tool runner). tool_choice stays auto (Sonnet 5.5 rejects any/tool). strict: true + additionalProperties: false saved for M4 input validation.
