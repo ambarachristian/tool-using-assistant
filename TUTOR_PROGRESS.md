@@ -1,7 +1,7 @@
 # Tutor progress: Tool-using assistant
 
 Roadmap: AI agents · Level 1 of 5 (Foundations) · Project 2 of 26
-Mode: tutor mode. The learner types every project file. Claude only writes this file.
+Mode: tutor mode (M1–M4 step 1: the learner typed every project file). From M4 step 2 on, at the learner's request, Claude wrote the code.
 Stack: Python 3.13 (learner chose 3.13 over 3.12 on 2026-10-26), anthropic SDK (claude-sonnet-5-5), httpx (Open-Meteo), python-dotenv, no agent framework.
 Machine: Windows 11, PowerShell terminal in VS Code.
 
@@ -106,11 +106,34 @@ Machine: Windows 11, PowerShell terminal in VS Code.
 - 2026-10-28 · M3 Step 5: learner skipped the check ("continue"). Gave short answers.
 - 2026-10-28 · M3 Step 6 sent: commit "Milestone 3: hand-written agent loop with iteration cap and transcript" + push.
 
+- 2026-10-28 · M3 Step 6 done. Commit e4e1d41 pushed. **MILESTONE 3 COMPLETE.**
+
+## Milestone 4 steps (expected)
+1. handle_tool_calls: try/except around run_tool → tool_result with is_error: True + "[tool error]" trace (errors are data for the model)
+2. Clear error messages inside tools: get_weather "no place named X" (ValueError), calculator divide by zero, read_file not found → list available note files (also solves file-name discovery)
+3. Input validation: strict: true + additionalProperties: false on all 3 schemas (API guarantees shape); code checks meaning (empty city, etc.), since strict can't express minLength/minimum
+4. Conversation history: chat REPL (input() loop, one messages list, "quit"), follow-up questions work
+5. Streaming the final answer: client.messages.stream + text_stream inside run_agent; system prompt line "plain text, no Markdown"; leave eager_input_streaming off (tiny inputs, keep strict validation) and say why
+6. stop_reason handling: max_tokens / refusal messages; consider fallbacks="default" (beta server-side-fallback-2026-07-01) — check SDK support first
+7. Understanding check + commit + push
+
+- 2026-10-28 · M4 Step 1 sent: try/except in handle_tool_calls, is_error, [tool error] trace. Tests: weather in Xyzzyville (KeyError 'results'), notes file groceries.md (FileNotFoundError with full path).
+
+- 2026-10-28 · Learner asked to speed up; chose "compact steps" via question. M4 Step 1 done: handle_tool_calls with try/except + is_error correct.
+- 2026-10-28 · M4 Step 2 sent: clear errors in tools.py: get_weather ValueError "No place found named …" (uses .get("results")), calculator ValueError "Cannot divide by zero.", read_file FileNotFoundError listing available files (rglob, relative posix paths). Check: groceries.md → error lists shopping.md → Claude may retry.
+
+- 2026-10-28 · **MODE CHANGE.** Learner: "just do all the steps and tell me, I grasped the essentials of this project." Tutor mode dropped for the rest of the project at the learner's explicit request. Claude wrote M4 steps 2–6 and M5 itself, ran the checks, and gave a key-points summary.
+- 2026-10-28 · M4 steps 2–6 done by Claude:
+  - tools.py: strict: true + additionalProperties: false on all 3 schemas; clear errors (unknown operation, divide by zero, Decimal overflow/undefined, empty city, unknown city, weather service down via httpx.HTTPError, empty path, file not found listing available files, non-UTF-8 file, unknown tool name).
+  - agent.py: streaming via client.beta.messages.stream with fallbacks="default" (beta server-side-fallback-2026-07-01); stop_reason handling (tool_use / max_tokens / refusal / end_turn); empty refusal content not appended; chat REPL with one messages list (memory); API errors caught as a chain (auth, rate limit, connection, status); --transcript flag; system prompt asks for plain text, no Markdown; stdout forced to UTF-8.
+  - eager_input_streaming deliberately left off: tool inputs are tiny and strict validation is wanted.
+  - Verified live: groceries.md → error lists shopping.md → Claude reads it; chat follow-up "And in Fahrenheit?" uses Lisbon from history; divide by 0 + power in parallel → one error result, one success, clean answer.
+
 ## Technical notes (for the tutor)
 - anthropic 2.3.0 = API version 2026-10-21: no temperature/top_p/top_k (400). Basic messages.create unchanged.
 - claude-sonnet-5-5: adaptive thinking on by default (content may include an empty `thinking` block before `text`), effort default high, forced tool_choice any/tool returns 400 (use auto).
-- Plan for M4: handle stop_reason "refusal" and mention server-side fallbacks (beta server-side-fallback-2026-07-01, fallbacks="default").
+- Server-side fallback on Sonnet 5.5 only retries "cyber" and "frontier_llm" declines (not bio / reasoning_extraction / general_harms).
 
 ## Next
-- Verify M3 commit + push. Then **Milestone 4 Step 1**: tools return errors instead of crashing (try/except in run_tool → tool_result with is_error: True). Show plan for M4 first. M4 will reuse run_agent(messages) for a multi-turn chat REPL. Commit TUTOR_PROGRESS.md updates with the M2 commit.
-- Design decisions: manual loop (learner's requirement, no tool runner). tool_choice stays auto (Sonnet 5.5 rejects any/tool). strict: true + additionalProperties: false saved for M4 input validation.
+- M4 commit + push, then M5 (evaluate.py with 10 questions, eval_log.json, README with results), commit + push, final summary for the learner.
+- Design decisions: manual loop (learner's requirement, no tool runner). tool_choice stays auto (Sonnet 5.5 rejects any/tool).
