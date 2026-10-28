@@ -129,11 +129,17 @@ Machine: Windows 11, PowerShell terminal in VS Code.
   - eager_input_streaming deliberately left off: tool inputs are tiny and strict validation is wanted.
   - Verified live: groceries.md → error lists shopping.md → Claude reads it; chat follow-up "And in Fahrenheit?" uses Lisbon from history; divide by 0 + power in parallel → one error result, one success, clean answer.
 
+- 2026-10-28 · M4 committed and pushed: f0ec298. **MILESTONE 4 COMPLETE.**
+- 2026-10-28 · M5 done by Claude: notes/trip.md (Lisbon), evaluate.py (10 questions, eval_log.json + eval_results.md, --rescore re-grades saved answers without API calls), README.md with setup, how it works, results and findings.
+  - Result: right tools 10/10, explained 10/10 (26 API calls). First "explained" checker demanded the word "tool" → 7/10 false failures on tests 5, 7, 8; fixed to accept "used", re-graded the same answers.
+  - Findings: parallel + chain (5), recovery from guessed file name (6), graceful unknown city (10), "current not forecast" caveat (8), one mental calculation in test 5 (correct, disclosed), 2-number calculator → 5 turns for a 4-item total (7).
+- **"FINISHED WHEN" CHECKPOINT MET: picks the right tool for 10 test questions and explains its answers. PROJECT COMPLETE.**
+
 ## Technical notes (for the tutor)
 - anthropic 2.3.0 = API version 2026-10-21: no temperature/top_p/top_k (400). Basic messages.create unchanged.
 - claude-sonnet-5-5: adaptive thinking on by default (content may include an empty `thinking` block before `text`), effort default high, forced tool_choice any/tool returns 400 (use auto).
 - Server-side fallback on Sonnet 5.5 only retries "cyber" and "frontier_llm" declines (not bio / reasoning_extraction / general_harms).
 
 ## Next
-- M4 commit + push, then M5 (evaluate.py with 10 questions, eval_log.json, README with results), commit + push, final summary for the learner.
+- Project complete. Possible extensions if the learner returns: a `sum` operation (fewer turns), a list_notes tool, prompt caching for the system prompt + tools, a cost line per run (usage tokens), a bigger eval set run several times.
 - Design decisions: manual loop (learner's requirement, no tool runner). tool_choice stays auto (Sonnet 5.5 rejects any/tool).
